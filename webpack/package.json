@@ -1,0 +1,20 @@
+{
+  "devDependencies": {
+    "uglifyjs-webpack-plugin": "^2.2.0",
+    "webpack": "^4.41.6"
+  },
+  "scripts": {
+    "build": "webpack --config webpack.config.js"
+  },
+  "name": "captcha",
+  "version": "1.0.0",
+  "description": "captcha project",
+  "main": "webpack.config.js",
+  "dependencies": {
+    "fsevents": "^1.2.11",
+    "uglify-js": "^3.8.0",
+    "webpack-cli": "^3.3.11"
+  },
+  "author": "liangjiandong",
+  "license": "ISC"
+}

@@ -1,0 +1,33 @@
+<web-app>
+
+    <!-- 项目名称 -->
+    <display-name>Archetype Created Web Application</display-name>
+    <!-- 配置spring-servlet  开始  -->
+    <servlet>
+        <servlet-name>spring</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <!-- 配置spring-servlet的一个初始化参数：配置spring-mvc配置文件的位置和参数-->
+
+        <!--
+              实际上也可以不通过contextConfigLocation来配置springmvc的配置文件
+              默认的配置文件为:/WEB-INF/<servlet-name>-servlet.xml
+         -->
+        <!--<init-param>
+          <param-name>contextConfigLocation</param-name>
+          <param-value>/WEB-INF/spring-servlet.xml</param-value>
+        </init-param>-->
+
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>default</servlet-name>
+        <url-pattern>*.js</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>spring</servlet-name>
+        <!--  所有请求  -->
+        <url-pattern>/</url-pattern>
+
+    </servlet-mapping>
+
+</web-app>
