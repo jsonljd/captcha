@@ -17,7 +17,7 @@
     <url>http://www.example.com</url>
 
     <properties>
-        <spring.version>4.3.18.RELEASE</spring.version>
+        <spring.version>5.2.3.RELEASE</spring.version>
         <!-- <mysql-connector-java.version>5.1.34</mysql-connector-java.version> -->
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
