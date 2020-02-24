@@ -8,7 +8,7 @@ V2.0 验证码
 *   代码框架
     *   java后台：api及交互方式代码分类，高度扩展，
     *   前台交互：通过js闭包方式对框架进行处理，核心代码和交互插件分类、通过webpack方法打包
-    *   demo 地址  http://123.207.96.135/captcha/
+    *   [Demo 地址](http://123.207.96.135/captcha/ "Demo 地址")
 *   只实现拼图验证及图形顺序点击交互，项目可对业界不同的交互方式进行实现。
 
 # 前端概述
@@ -122,9 +122,38 @@ var pulgin_demo = {
 
 ## 设计原则
 
+*   结构明朗
+*   可扩展、易维护
+
 ## 架构设计
 
+### 整体说明
+*   通过java底层进行架构封装
+*   高度抽象接口及实现方式
+*   调用简单
+
+
+### 架构图
+
+![架构图](https://github.com/jsonljd/captcha/blob/master/wiki/resource/interface.png?raw=true)
+
+
 ### 接口说明
+
+```mermaid
+graph TD
+A[总经理] -->|A1| B(XX副总)
+B --> C[XX部]
+B --> D[XX部]
+B --> E[XX部]
+C--> G[模块4]
+C--> H[模块5]
+C--> J[模块6]
+D--> K[模块K]
+E--> L[模块1]
+E--> Z[模块2]
+E--> X[模块3]
+```
 
 ### 主要方法
 
