@@ -225,24 +225,26 @@ var captcha = function(){
 		})();
 		
 
-		var buildConfig = {'content':'','bgWidth': 300,'bgHight':130,'jigsawWidth':45,'jigsawHight':45};	
+		var buildConfig = {'content':'','bgWidth': 300,'bgHight':130,'jigsawWidth':45,'jigsawHight':45,'tipHeight':28};	
 		var pluginMap = new Map();
 
 		var captcha = function(conf){
 			conf = unit.extend(buildConfig,conf);
 			var content = unit.getId(conf.content);
 
-			var build = function(captchaData,callback){
+			
+			var build = function(captchaData,callback){	
 				content.innerHTML = '';
 				var xqo = eval('(' + captchaData + ')');
-				if(xqo && xqo.factory){
+				if(xqo && xqo.factory){					
 					var plugTmp = pluginMap.get(xqo.factory);
 					if(plugTmp){
+						var confTmp = unit.extend(conf,xqo.params);
 						var allConf = {};
 						allConf["captchaData"] = xqo;
 						allConf["parContent"] = content;
 						allConf["unit"] = unit;
-						allConf = unit.extend(allConf,conf);
+						allConf = unit.extend(confTmp,allConf);
 						plugTmp.build(allConf,callback);
 					}
 				}				
@@ -259,7 +261,7 @@ var captcha = function(){
 		}	
 
         var help = function() {
-            var url = "";
+            var url = "https://github.com/jsonljd/captcha";
             window.open(url, '_brank', 'height=600,width=480,top=0,left=0,status=no,toolbar=no,menubar=no,location=no,scrollbars=yes');
             return true;
         };

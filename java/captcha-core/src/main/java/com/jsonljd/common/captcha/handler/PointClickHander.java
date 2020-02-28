@@ -28,7 +28,9 @@ public class PointClickHander extends ImgHttpBaseHandler {
 
     @Override
     public void initBuildParams() {
-
+        if(!childParams.containsKey(ConstUtil.KEY_POINT_DIS_RADIUS)){
+            childParams.put(ConstUtil.KEY_POINT_DIS_RADIUS,ConstUtil.DEF_POINT_DIS_RADIUS);
+        }
     }
 
     @Override

@@ -4,7 +4,7 @@ function point(){
 				var canvas = conf.unit.createCanvas(conf.bgWidth,conf.bgHight);
 				var ctx = canvas.getContext('2d');
 
-				var canvas2 = conf.unit.createCanvas(conf.bgWidth,28);
+				var canvas2 = conf.unit.createCanvas(conf.bgWidth,conf.tipHeight);
 				var ctx2 = canvas2.getContext('2d');
 
 				var isize = conf.captchaData.params.i_s;	
@@ -25,7 +25,7 @@ function point(){
 					if(xqo[i].type==="SECONDARY_IMG"){
 						img_sec.src = "data:image/png;base64,"+ xqo[i].img;
 						img_sec.onload = function(){	
-							ctx2.drawImage(img_sec,0,0,conf.bgWidth,28);
+							ctx2.drawImage(img_sec,0,0,conf.bgWidth,conf.tipHeight);
 						}
 					}
 				}	
@@ -33,13 +33,13 @@ function point(){
 				var tr = conf.unit.createElement("tr");
 				var td = conf.unit.createElement("td");
 
-				td.appendChild(canvas2);
+				td.appendChild(canvas);
 				tr.appendChild(td);
 				table.appendChild(tr);
 
 				tr = conf.unit.createElement("tr");
 				td = conf.unit.createElement("td");
-				td.appendChild(canvas);
+				td.appendChild(canvas2);
 				tr.appendChild(td);
 				table.appendChild(tr);
 
@@ -73,6 +73,8 @@ function point(){
 					ctx.fillText(text,cood.x, cood.y);
 				}
 
+				
+
 				var cliindex = 0;
 				var clkarr = [];
 				var iswait = false;
@@ -80,6 +82,45 @@ function point(){
 				{ bgcolor: 'pink', value: 100 },
 				{ bgcolor: 'red', value: 100 }
 				];
+
+				var postStatus = function(status,callback){
+					ctx.drawImage(img,0,0);
+							cliindex = 0;
+							clkarr = [];
+							iswait = false;
+
+					if(status){
+						if(callback){
+							callback();
+						}
+					}else{
+						ctx2.clearRect(0,0,canvas2.width,canvas2.height);
+
+						ctx2.beginPath();
+						ctx2.lineWidth = 2;
+						
+						ctx2.rect(1,1,conf.bgWidth-2,conf.tipHeight-2);
+						ctx2.strokeStyle = 'red';
+						ctx2.fillStyle = '#FFF5EE';
+						ctx2.fill();
+						ctx2.stroke();
+
+						
+						ctx2.textAlign="center";
+						ctx2.textBaseline="middle";
+						ctx2.fillStyle = "red";
+						ctx2.fillText("验证失败", conf.bgWidth/2, conf.tipHeight/2);
+						
+						
+						if(callback){
+							setTimeout(function(){
+							callback();
+							},800);
+						}
+					}
+					
+				}
+
 				canvas.onclick = function(e){
 					if(iswait){
 						return;
@@ -93,13 +134,7 @@ function point(){
 					drawRic(ctx, data, { cood: { x: e.offsetX, y: e.offsetY }, radius: 10 },cliindex);
 					if( Math.ceil(cliindex) >= Math.ceil(isize) ) {
 						iswait = true;
-						setTimeout(function(){
-							callbak(JSON.stringify(clkarr));
-							ctx.drawImage(img,0,0);
-							cliindex = 0;
-							clkarr = [];
-							iswait = false;
-						},800);						
+						callbak(JSON.stringify(clkarr),postStatus);	
 						return;
 					}
 				}

@@ -1,26 +1,40 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <html>
 <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-<script src="/js/captcha.js"></script>
+<script src="<%=request.getContextPath()%>/js/captcha.js"></script>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <meta name="viewport"/>
+</head>
 <body>
-<input type="radio" value="puzzle" name="handlergroup" id="puzzle" checked="checked" /><label for="puzzle">puzzle</label>
-<input type="radio" value="point" name="handlergroup" id="point" /><label for="point">point</label>
-<div id="can"></div>
+<a href="https://github.com/jsonljd/captcha" target="_blank">查看github</a>
+<br/>
+切换交互方式
+<br/>
+<input type="radio" value="puzzle" name="handlergroup" id="puzzle" checked="checked" /><label for="puzzle">拼图验证</label>
+<input type="radio" value="point" name="handlergroup" id="point" /><label for="point">图点击验证</label>
+<div  style="position: absolute;left: 300px;top:100px;" id="can"></div>
 <script type="application/javascript">
     var conf = {'content':'can'};
 
-    var callback = function(data){
+    var callback = function(data,postStatus){
         $.ajax({
-            url : "/verifiCode",
+            url : "<%=request.getContextPath()%>/verifiCode",
             type : "POST",
             dataType: 'text',
             contentType:'application/json;charset=UTF-8',
             data:data,
             success : function(result) {
                 if(result=="false") {
-                    init();
+                    postStatus(false,function(){
+                        init();
+                    });
+
                 }else{
-                    alert("success");
-                    init();
+                    postStatus(true,function(){
+                        alert("success");
+                        init();
+                    });
                 }
             }
         });
@@ -28,9 +42,9 @@
 
     var init = function(){
         $.ajax({
-            url : "/captcha?handler="+$('input:radio:checked').val(),
+            url : "<%=request.getContextPath()%>/captcha?handler="+$('input:radio:checked').val(),
             success : function(result) {
-                jsonljd.captcha(conf).build(result,callback);
+                fastCaptcha.captcha(conf).build(result,callback);
             }
         });
     }

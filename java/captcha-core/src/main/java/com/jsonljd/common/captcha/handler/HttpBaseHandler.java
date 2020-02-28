@@ -29,8 +29,8 @@ public abstract class HttpBaseHandler<T extends Serializable> extends BaseHandle
 
     @Override
     protected ToBeVerifyEntity convertForInnerVerify(String orgData, String iptData) {
-        Assert.hasText(orgData,"orgData is empty str");
-        Assert.hasText(iptData,"iptData is empty str");
+        Assert.hasText(orgData, "orgData is empty str");
+        Assert.hasText(iptData, "iptData is empty str");
         ToBeVerifyEntity toBeVerifyEntity = new ToBeVerifyEntity();
         toBeVerifyEntity.setOriginalByte(orgData.getBytes());
         toBeVerifyEntity.setVerifyByte(iptData.getBytes());
@@ -39,19 +39,19 @@ public abstract class HttpBaseHandler<T extends Serializable> extends BaseHandle
 
     @Override
     protected String convertForView(String buildFactoryName, CaptchaEntity<T>[] captchaArr, Map<String, Object> buildParams) {
-        Map<String,Object> retAll = new HashMap<>();
-        retAll.put("factory",buildFactoryName);
-        retAll.put("params",JSON.parseObject(JSON.toJSONString(buildParams)));
-        List<Map<String,Object>> ret = new ArrayList<>();
-        Map<String,Object> objectMap;
-        for(CaptchaEntity<T> item:captchaArr){
+        Map<String, Object> retAll = new HashMap<>();
+        retAll.put("factory", buildFactoryName);
+        retAll.put("params", JSON.parseObject(JSON.toJSONString(buildParams)));
+        List<Map<String, Object>> ret = new ArrayList<>();
+        Map<String, Object> objectMap;
+        for (CaptchaEntity<T> item : captchaArr) {
             objectMap = new HashMap<>();
-            objectMap.put("handler",getHandlerName());
-            objectMap.put("type",item.getCaptchaType());
+            objectMap.put("handler", getHandlerName());
+            objectMap.put("type", item.getCaptchaType());
             objectMap.put("originalObj", item.getOriginalObj());
             ret.add(objectMap);
         }
-        retAll.put("data",ret);
+        retAll.put("data", ret);
         return JSON.toJSONString(retAll);
     }
 
@@ -59,21 +59,26 @@ public abstract class HttpBaseHandler<T extends Serializable> extends BaseHandle
     protected String convertForStoreVerify(CaptchaEntity<T>[] captchaArr, Map<String, Object> buildParams) {
         String data = JSON.toJSONString(captchaArr);
         String parms = JSON.toJSONString(buildParams);
-        Assert.hasText(data,"data is empty str");
-        Assert.hasText(parms,"parms is empty str");
+        Assert.hasText(data, "data is empty str");
+        Assert.hasText(parms, "parms is empty str");
         return SecurityUtil.encode(data, parms);
     }
 
     @Override
-    protected Map<String, Object> dealBuildParams(Map<String, Object> bizParams) {
+    protected void beforeBuildParams(Map<String, Object> bizParams) {
         if (bizParams == null) {
             bizParams = new HashMap<>();
         }
         this.initBuildParams();
         for (Map.Entry<String, Object> entry : this.childParams.entrySet()) {
-            bizParams.put(entry.getKey(), entry.getValue());
+            if (!bizParams.containsKey(entry.getKey()))
+                bizParams.put(entry.getKey(), entry.getValue());
         }
         bizParams.put("BUILD_TYPE", getHandlerName());
-        return bizParams;
+    }
+
+    @Override
+    protected void afterBuildParams(Map<String, Object> bizParams) {
+
     }
 }

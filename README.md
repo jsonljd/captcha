@@ -18,6 +18,128 @@
         [ ] 语义验证
         
         [ ] 图片旋转验证
+        
+# 调用方式
+
+## 后端调用
+
+### maven引用
+
+```
+<dependencies>
+        <dependency>
+            <artifactId>captcha-api</artifactId>
+            <groupId>com.jsonljd</groupId>
+            <version>${当前版本}</version>
+        </dependency>
+        <dependency>
+            <artifactId>captcha-core</artifactId>
+            <groupId>com.jsonljd</groupId>
+            <version>${当前版本}</version>
+        </dependency>
+<dependencies>       
+```
+
+### web使用
+```
+    @Autowired
+    private DefaultHttpServletBuildFactory httpServletBuildFactory;
+
+
+    /**
+    * 生产验证码类型
+    **/
+    @RequestMapping("/captcha")
+    @ResponseBody
+    public String captcha(HttpServletRequest request, String handler) {
+        WebBizMakeImageHandler webBizMakeImageHandler = new WebBizMakeImageHandler();
+        Map<String, Object> params = new HashMap<>();
+        params.put("HANDLER_TYPE", "puzzle".equalsIgnoreCase(handler) ? ConstUtil.CONS_PUZZLE_HANDLER : ConstUtil.CONS_POINT_CLICK_HANDLER);
+        //params.put(ConstUtil.KEY_IMG_BG_HEIGHT, 130); //设置背景图高[选项]  默认 130
+        
+        //params.put(ConstUtil.KEY_IMG_BG_WIDTH, 300);  //设置背景图宽[选项]  默认 300
+
+        //params.put(ConstUtil.CON_BG_HANDLER,new SelfBgHandler()); //设置背景图选择接口[选项]  默认内置随机图
+
+        //params.put(ConstUtil.KEY_POINT_DIS_RADIUS,60D); //设置点击距离半径范围[选项]  默认 60D
+
+        //params.put(ConstUtil.KEY_IMG_PUZZLE_RADIUS, 10F);//设置拼图圆半径[选项]  默认 10F
+
+        //params.put(ConstUtil.KEY_IMG_PUZZLE_SPLIT_LINE, 30F);//设置拼图直线长度[选项]  默认 30F
+
+        webBizMakeImageHandler.setParams(params);
+        httpServletBuildFactory.buildCaptcha(webBizMakeImageHandler);
+        HttpSession session = request.getSession();
+        session.setAttribute(CAPTCHA_KEY, webBizMakeImageHandler.getStoreForVerifyStr());
+        return webBizMakeImageHandler.getOutputForViewStr();
+    }
+
+    /**
+    * 校验验证码
+    **/
+    @RequestMapping(value = "/verifiCode", method = RequestMethod.POST)
+    @ResponseBody
+    public String verifiCode(HttpServletRequest request, @RequestBody String iptData) {
+        WebBizVerifiCodeHandler webBizMakeImageHandler = new WebBizVerifiCodeHandler();
+        HttpSession session = request.getSession();
+        webBizMakeImageHandler.setOrgData(session.getAttribute(CAPTCHA_KEY).toString());
+        webBizMakeImageHandler.setIptData(iptData);
+        Boolean verifiResult = httpServletBuildFactory.verifiCode(webBizMakeImageHandler);
+        return verifiResult.toString();
+    }
+```
+
+## 前端引用
+
+```
+<script src="jquery-3.4.1.min.js"></script>
+<script src="/js/captcha.js"></script>
+
+
+<script type="application/javascript">
+    var conf = {'content':'can'};
+
+    var callback = function(data,postStatus){
+        $.ajax({
+            url : "<%=request.getContextPath()%>/verifiCode",
+            type : "POST",
+            dataType: 'text',
+            contentType:'application/json;charset=UTF-8',
+            data:data,
+            success : function(result) {
+                if(result=="false") {
+                    postStatus(false,function(){
+                        init();
+                    });
+
+                }else{
+                    postStatus(true,function(){
+                        alert("success");
+                        init();
+                    });
+                }
+            }
+        });
+    }
+
+    var init = function(){
+        $.ajax({
+            url : "<%=request.getContextPath()%>/captcha?handler="+$('input:radio:checked').val(),
+            success : function(result) {
+                fastCaptcha.captcha(conf).build(result,callback);
+            }
+        });
+    }
+
+    $(function(){
+        init();
+    });
+
+    $('input:radio').change(function(){
+        init();
+    });
+</script>
+```        
 
 # 前端概述
 
@@ -147,21 +269,6 @@ var pulgin_demo = {
 
 
 ### 接口说明
-
-```mermaid
-graph TD
-A[总经理] -->|A1| B(XX副总)
-B --> C[XX部]
-B --> D[XX部]
-B --> E[XX部]
-C--> G[模块4]
-C--> H[模块5]
-C--> J[模块6]
-D--> K[模块K]
-E--> L[模块1]
-E--> Z[模块2]
-E--> X[模块3]
-```
 
 ### 主要方法
 

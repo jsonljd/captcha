@@ -7,10 +7,13 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
+import java.util.Random;
 
 /**
  * @Author <a href="mailto:liangjiandong@wxchina.com">JianDong.Liang</a>
@@ -19,7 +22,7 @@ import java.math.BigInteger;
  */
 public class ImageUtil {
     private static final float C = 0.55228474983f;
-
+    private static Random random = new Random();
     /**
      * 复制图像
      *
@@ -39,15 +42,86 @@ public class ImageUtil {
         return null;
     }
 
+
+
     /**
-     * 按照路径添加图片阴影
      *
-     * @param srcImg
-     * @param path
-     * @param translatePoint
+     * @param input 图形输入流
+     * @param height 高
+     * @param width 宽
+     * @param bb 是否白边
+     * @return
      */
-    public static void addShadowImage(BufferedImage srcImg, GeneralPath path, Point translatePoint) {
-        addShadowImage(srcImg, path, translatePoint,null,null);
+    public final static BufferedImage scale(BufferedImage input, int height, int width, boolean bb) {
+        try {
+            double ratio = 0.0; // 缩放比例
+            BufferedImage bi = input;
+            Image itemp = null;// // 计算比例
+            if ((bi.getHeight() > height) || (bi.getWidth() > width)) {
+                itemp = bi.getScaledInstance(width, height, bi.SCALE_SMOOTH);//bi.SCALE_SMOOTH  选择图像平滑度比缩放速度具有更高优先级的图像缩放算法。
+                double   ratioHeight = (new Integer(height)).doubleValue()/ bi.getHeight();
+                double   ratioWhidth = (new Integer(width)).doubleValue()/ bi.getWidth();
+                if(ratioHeight>ratioWhidth){
+                    ratio= ratioHeight;
+                }else{
+                    ratio= ratioWhidth;
+                }
+                AffineTransformOp op = new AffineTransformOp(AffineTransform//仿射转换
+                        .getScaleInstance(ratio, ratio), null);//返回表示剪切变换的变换
+                itemp = op.filter(bi, null);//转换源 BufferedImage 并将结果存储在目标 BufferedImage 中。
+            }else{
+                itemp = input;
+            }
+            if (bb) {//补白
+                BufferedImage image = new BufferedImage(width, height,
+                        BufferedImage.TYPE_INT_RGB);//构造一个类型为预定义图像类型之一的 BufferedImage。
+                Graphics2D g = image.createGraphics();//创建一个 Graphics2D，可以将它绘制到此 BufferedImage 中。
+                g.setColor(Color.white);//控制颜色
+                g.fillRect(0, 0, width, height);// 使用 Graphics2D 上下文的设置，填充 Shape 的内部区域。
+                if (width == itemp.getWidth(null))
+                    g.drawImage(itemp, 0, (height - itemp.getHeight(null)) / 2,
+                            itemp.getWidth(null), itemp.getHeight(null),
+                            Color.white, null);
+                else
+                    g.drawImage(itemp, (width - itemp.getWidth(null)) / 2, 0,
+                            itemp.getWidth(null), itemp.getHeight(null),
+                            Color.white, null);
+                g.dispose();
+                itemp = image;
+            }
+            return (BufferedImage)itemp;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     *
+     * @param input 图形输入流
+     * @param height 高
+     * @param width 宽
+     * @return
+     */
+    public final static BufferedImage scale(BufferedImage input, int height, int width){
+        return scale(input,height,width,false);
+    }
+
+    /**
+     *
+     * @param input 图形输入流
+     * @param height 高
+     * @param width 宽
+     * @param bb 是否白边
+     * @return
+     */
+    public final static BufferedImage scale(InputStream input, int height, int width, boolean bb) {
+        try {
+            return scale(ImageIO.read(input),height,width,bb);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     /**
@@ -57,7 +131,7 @@ public class ImageUtil {
      * @param path
      * @param translatePoint
      */
-    public static void addShadowImage(BufferedImage srcImg, GeneralPath path, Point translatePoint,GeneralPath pathObstruct, Point obstructPoint) {
+    public static void addShadowImage(BufferedImage srcImg,int gbW,int gbH ,GeneralPath path, Point translatePoint,GeneralPath pathObstruct, Point obstructPoint) {
         Graphics2D graphics = srcImg.createGraphics();
         try {
             graphics.setColor(new Color(0, 0, 0, 140));
@@ -74,28 +148,83 @@ public class ImageUtil {
             }
 
 
-            BasicStroke bs = new BasicStroke(1);
+            /*BasicStroke bs = new BasicStroke(1);
             graphics.setColor(new Color(255, 255, 255, 150));
             graphics.setStroke(bs);
             graphics.draw(pathNew);
 
             GeneralPath pathTriangle = (GeneralPath) ImageUtil.simpleTriangle().clone();
-            pathTriangle.transform(AffineTransform.getTranslateInstance(29, 110));
+            pathTriangle.transform(AffineTransform.getTranslateInstance(Double.valueOf(gbW*0.1).intValue(), Double.valueOf(gbH*0.845).intValue()));
 
             graphics.setColor(new Color(255, 255, 255, 150));
             graphics.fill(pathTriangle);
 
             GeneralPath pathTriangle2 = (GeneralPath) ImageUtil.simpleTriangle().clone();
-            pathTriangle2.transform(AffineTransform.getTranslateInstance(29, 117));
+            pathTriangle2.transform(AffineTransform.getTranslateInstance(Double.valueOf(gbW*0.1).intValue(), Double.valueOf(gbH*0.9).intValue()));
 
             graphics.setColor(new Color(255, 255, 255, 255));
-            graphics.fill(pathTriangle2);
+            graphics.fill(pathTriangle2);*/
 
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             graphics.dispose();
         }
+    }
+
+    public static void addBgPoint(BufferedImage image){
+        Graphics2D g2 = image.createGraphics();
+        // 绘制干扰线
+        Random random = new Random();
+        g2.setColor(getRandColor(160, 200));// 设置线条的颜色
+        for (int i = 0; i < 10; i++) {
+            int x = random.nextInt(image.getWidth() - 1);
+            int y = random.nextInt(image.getHeight() - 1);
+            int xl = random.nextInt(6) + 1;
+            int yl = random.nextInt(12) + 1;
+            g2.drawLine(x, y, x + xl + 40, y + yl + 20);
+        }
+
+        // 添加噪点
+        float yawpRate = 0.02f;// 噪声率
+        int area = (int) (yawpRate * image.getWidth() * image.getHeight());
+        for (int i = 0; i < area; i++) {
+            int x = random.nextInt(image.getWidth());
+            int y = random.nextInt(image.getHeight());
+            int rgb = getRandomIntColor();
+            image.setRGB(x, y, rgb);
+        }
+        g2.dispose();
+    }
+
+
+    public static int getRandomIntColor() {
+        int[] rgb = getRandomRgb();
+        int color = 0;
+        for (int c : rgb) {
+            color = color << 8;
+            color = color | c;
+        }
+        return color;
+    }
+
+    private static int[] getRandomRgb() {
+        int[] rgb = new int[3];
+        for (int i = 0; i < 3; i++) {
+            rgb[i] = random.nextInt(255);
+        }
+        return rgb;
+    }
+
+    public static Color getRandColor(int fc, int bc) {
+        if (fc > 255)
+            fc = 255;
+        if (bc > 255)
+            bc = 255;
+        int r = fc + random.nextInt(bc - fc);
+        int g = fc + random.nextInt(bc - fc);
+        int b = fc + random.nextInt(bc - fc);
+        return new Color(r, g, b);
     }
 
     /**

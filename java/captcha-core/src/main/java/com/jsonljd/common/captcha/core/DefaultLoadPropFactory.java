@@ -1,5 +1,6 @@
 package com.jsonljd.common.captcha.core;
 
+import com.jsonljd.common.captcha.utils.ConstUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +29,7 @@ public final class DefaultLoadPropFactory {
 
     private static Logger logger = LoggerFactory.getLogger(DefaultLoadPropFactory.class);
     private static Properties prop = new Properties();
-    private static Map<Integer,List<BufferedImage>> cacheImg = null;// new ArrayList<>();
+    private static Map<String,List<BufferedImage>> cacheImg = null;// new ArrayList<>();
     private static Font defaultFont = null;
 
     private static Object objSyn = new Object();
@@ -87,24 +88,24 @@ public final class DefaultLoadPropFactory {
                 }
                 cacheImg = new HashMap<>();
                 String urls = getProperty(BG_URL_ONCLICK_LIST);
-                cacheImg.put(1, getList(urls));
+                cacheImg.put(ConstUtil.CONS_POINT_CLICK_HANDLER, getList(urls));
                 urls = getProperty(BG_URL_JIGSAW_LIST);
-                cacheImg.put(2, getList(urls));
+                cacheImg.put(ConstUtil.CONS_PUZZLE_HANDLER, getList(urls));
             }
         }
     }
 
-    public static BufferedImage getSpecify(int type,int k){
+    public static BufferedImage getSpecify(String handlerName,int k){
         initImg();
-        List<BufferedImage> _cacheImg = cacheImg.get(type);
+        List<BufferedImage> _cacheImg = cacheImg.get(handlerName);
         int index = k % _cacheImg.size();
         BufferedImage ret = _cacheImg.get(index);
         return copyImage(ret);
     }
 
-    public static BufferedImage getRandom(int type) {
+    public static BufferedImage getRandom(String handlerName) {
         initImg();
-        List<BufferedImage> _cacheImg = cacheImg.get(type);
+        List<BufferedImage> _cacheImg = cacheImg.get(handlerName);
         int index = Double.valueOf(Math.random()*_cacheImg.size()).intValue();
         BufferedImage ret = _cacheImg.get(index);
         return copyImage(ret);

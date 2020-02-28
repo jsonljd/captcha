@@ -5,17 +5,16 @@ import com.jsonljd.common.captcha.api.biz.IBizVerifiCodeHandler;
 import com.jsonljd.common.captcha.api.entity.CaptchaEntity;
 import com.jsonljd.common.captcha.api.entity.ToBeVerifyEntity;
 
-import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.Map;
 
 /**
  * @Classname AbsCaptchaBuildFactory
- * @Description TODO
+ * @Description 验证码处理类
  * @Date 2020/2/18 17:00
  * @Created by JSON.L
  */
-public abstract class AbsCaptchaBuildFactory<DAT extends Serializable, IPT extends Serializable, B extends ToBeVerifyEntity, T extends CaptchaEntity<TO>, TO extends Serializable> implements IHandler<IBizVerifiCodeHandler<DAT, IPT>, IBizMakeImageHandler> {
+public abstract class AbsCaptchaBuildFactory<DAT extends Serializable, IPT extends Serializable, B extends ToBeVerifyEntity, T extends CaptchaEntity<TO>, TO extends Serializable> implements IHandler<DAT,IBizVerifiCodeHandler<DAT, IPT>, IBizMakeImageHandler> {
     private ICaptchaFactory<B, T> captchaFactory = null;
 
     public abstract String getHandlerName();
@@ -53,30 +52,31 @@ public abstract class AbsCaptchaBuildFactory<DAT extends Serializable, IPT exten
      */
     protected abstract DAT convertForStoreVerify(T[] captchaArr, Map<String, Object> buildParams);
 
-    protected abstract Map<String, Object> dealBuildParams(Map<String, Object> bizParams);
+    /**
+     * 处理参数前处理
+     * @param bizParams 业务参数
+     * @return 内部过程参数
+     */
+    protected abstract void beforeBuildParams(Map<String, Object> bizParams);
+
+    /**
+     * 处理参数后处理
+     * @param bizParams 业务参数
+     * @return 内部过程参数
+     */
+    protected abstract void afterBuildParams(Map<String, Object> bizParams);
 
     @Override
     public boolean verifiCode(IBizVerifiCodeHandler<DAT, IPT> bizVerifiHandler) {
-
         return this.captchaFactory.verifiCode(convertForInnerVerify(bizVerifiHandler.getOrgData(), bizVerifiHandler.getIptData()));
     }
 
     @Override
-    public void makeImage(OutputStream outputStream, IBizMakeImageHandler bizVerifiHandler) {
+    public DAT buildCaptcha(IBizMakeImageHandler bizVerifiHandler) {
         Map<String, Object> stringObjectMap = bizVerifiHandler.getBizParams();
-        stringObjectMap = dealBuildParams(stringObjectMap);
+        beforeBuildParams(stringObjectMap);
         T[] captchaArr = this.captchaFactory.buildCaptcha(stringObjectMap);
-        bizVerifiHandler.outputForView(convertForView(getHandlerName(), captchaArr, stringObjectMap));
-        bizVerifiHandler.storeForVerify(convertForStoreVerify(captchaArr, stringObjectMap));
-        for (int i = 0; i < captchaArr.length; i++) {
-            this.captchaFactory.setImage(outputStream, captchaArr[i], stringObjectMap);
-        }
-    }
-
-    public DAT makeImage(IBizMakeImageHandler bizVerifiHandler) {
-        Map<String, Object> stringObjectMap = bizVerifiHandler.getBizParams();
-        stringObjectMap = dealBuildParams(stringObjectMap);
-        T[] captchaArr = this.captchaFactory.buildCaptcha(stringObjectMap);
+        afterBuildParams(stringObjectMap);
         DAT ret = convertForView(getHandlerName(), captchaArr, stringObjectMap);
         bizVerifiHandler.outputForView(ret);
         bizVerifiHandler.storeForVerify(convertForStoreVerify(captchaArr,stringObjectMap ));

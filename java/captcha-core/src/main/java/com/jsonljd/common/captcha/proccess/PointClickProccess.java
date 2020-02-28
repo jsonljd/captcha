@@ -7,6 +7,7 @@ import com.jsonljd.common.captcha.api.entity.ToBeVerifyEntity;
 import com.jsonljd.common.captcha.core.DefaultLoadPropFactory;
 import com.jsonljd.common.captcha.entity.ImgInteract;
 import com.jsonljd.common.captcha.entity.ImgPostion;
+import com.jsonljd.common.captcha.handler.bg.IBackgroundHandler;
 import com.jsonljd.common.captcha.utils.ByteUtil;
 import com.jsonljd.common.captcha.utils.ConstUtil;
 import com.jsonljd.common.captcha.utils.DistanceUtil;
@@ -30,30 +31,14 @@ import java.util.stream.Collectors;
  * @Created by JSON.L
  */
 public class PointClickProccess extends BaseProccess implements ICaptchaFactory<ToBeVerifyEntity, CaptchaEntity<ImgInteract>> {
-    private final static double RADIUS = 60D;
     private final static double PER = 75D;
     private final static double PER_OFFSET = 5D;
     private final static double SIM_THRESHOLD = 30D;
+    private static final int BIGGER_CIRCLE_COUNT = 20;
     @Setter
     private List<String> keyNames;
-    private static Random random = new Random();
     public PointClickProccess(List<String> keyNames) {
         this.keyNames = keyNames;
-    }
-
-    @Override
-    public OutputStream outImageSimple(CaptchaEntity<ImgInteract> captchaEntity, Map<String, Object> outParams) {
-        return null;
-    }
-
-    @Override
-    public OutputStream outImageArray(CaptchaEntity<ImgInteract>[] captchaEntitys, Map<String, Object> outParams) {
-        return null;
-    }
-
-    @Override
-    public void setImage(OutputStream outputStream, CaptchaEntity<ImgInteract> captchaEntity, Map<String, Object> outParams) {
-
     }
 
     @Override
@@ -91,23 +76,28 @@ public class PointClickProccess extends BaseProccess implements ICaptchaFactory<
         List<ImgPostion> ret = new LinkedList<>();
         char[] data = getKeyData().toCharArray();
         int count = data.length;
+        int circleErr = 0;
         while (count > 0) {
-            ImgPostion _tmp = getRandomPostion(String.valueOf(data[data.length - count]));
+            ImgPostion _tmp = getRandomPostion(String.valueOf(data[data.length - count]),(Integer)(buildParams.get(ConstUtil.KEY_IMG_BG_WIDTH)),(Integer)(buildParams.get(ConstUtil.KEY_IMG_BG_HEIGHT)));
             boolean isInCir = false;
             for (ImgPostion item : ret) {
-                if (isInCircle(_tmp.getX(), _tmp.getY(), item.getX(), item.getY(), RADIUS)) {
+                if (isInCircle(_tmp.getX(), _tmp.getY(), item.getX(), item.getY(), Double.valueOf (buildParams.get(ConstUtil.KEY_POINT_DIS_RADIUS).toString()))) {
                     isInCir = true;
                     break;
                 }
             }
             if (isInCir) {
+                if(circleErr> BIGGER_CIRCLE_COUNT){
+                    throw new IllegalArgumentException("circle too bigger,pleace check KEY_POINT_DIS_RADIUS ");
+                }
                 continue;
             }
+            circleErr = 0;
             ret.add(_tmp);
             count--;
         }
         buildParams.put(ConstUtil.IMG_CUT_SPLIE, ConstUtil.IMG_CUT_WIDTH);
-        buildParams.put(ConstUtil.IMG_RANDOM_ARR, ByteUtil.toShortList(orderWidth()));
+        buildParams.put(ConstUtil.IMG_RANDOM_ARR, ByteUtil.toShortList(orderWidth((Integer)(buildParams.get(ConstUtil.KEY_IMG_BG_WIDTH)))));
         buildParams.put(ConstUtil.IMG_SIZE, 3);
         if(buildParams!=null && buildParams.containsKey(ConstUtil.IS_MIX_IMAGE)){
             buildParams.put(ConstUtil.IS_MIX_IMAGE,buildParams.get(ConstUtil.IS_MIX_IMAGE));
@@ -143,7 +133,8 @@ public class PointClickProccess extends BaseProccess implements ICaptchaFactory<
     }
 
     private byte[] clickImage(List<ImgPostion> postionLists, Map<String, Object> params) throws IOException {
-        BufferedImage d = DefaultLoadPropFactory.getRandom(1);
+        IBackgroundHandler backgroundHandler = (IBackgroundHandler)params.get(ConstUtil.CON_BG_HANDLER);
+        BufferedImage d = backgroundHandler.getBackground((Integer)params.get(ConstUtil.KEY_IMG_BG_WIDTH),(Integer)params.get(ConstUtil.KEY_IMG_BG_HEIGHT));
         BufferedImage ret = null;
         for (ImgPostion item : postionLists) {
             ret = setContent(d, item.getKey(), (float) item.getX(), (float) item.getY());
@@ -164,7 +155,7 @@ public class PointClickProccess extends BaseProccess implements ICaptchaFactory<
         dataStr.append("请依次点击:");
         dataStr.append(postionLists.stream().map(i -> i.getKey()).collect(Collectors.joining("")));
         int sizeFont = params.get(ConstUtil.CONS_POINT_CLICK_TIP_FONT_SIZE)!=null?Integer.parseInt(params.get(ConstUtil.CONS_POINT_CLICK_TIP_FONT_SIZE).toString()):28;
-        return generateBufferedImage(BG_IMG_WIDTH, sizeFont,dataStr.toString());
+        return generateBufferedImage((Integer)params.get(ConstUtil.KEY_IMG_BG_WIDTH), sizeFont,dataStr.toString());
     }
 
     private String getKeyData() {
@@ -175,11 +166,11 @@ public class PointClickProccess extends BaseProccess implements ICaptchaFactory<
         return Math.random() * PER + PER_OFFSET;
     }
 
-    private ImgPostion getRandomPostion(String key) {
+    private ImgPostion getRandomPostion(String key,int gbWidth,int gbHeight) {
         Double xD = toScale(getRandomPoint());
         Double yD = toScale(getRandomPoint(20, 65));
-        int x = Double.valueOf(BG_IMG_WIDTH * (xD / SIM_PER)).intValue();
-        int y = Double.valueOf(BG_IMG_HEIGHT * (yD / SIM_PER)).intValue();
+        int x = Double.valueOf(gbWidth * (xD / SIM_PER)).intValue();
+        int y = Double.valueOf(gbHeight * (yD / SIM_PER)).intValue();
         return new ImgPostion(key, x, y);
     }
 
@@ -244,64 +235,21 @@ public class PointClickProccess extends BaseProccess implements ICaptchaFactory<
         return img;
     }
 
-    private static Color getRandColor(int fc, int bc) {
-        if (fc > 255)
-            fc = 255;
-        if (bc > 255)
-            bc = 255;
-        int r = fc + random.nextInt(bc - fc);
-        int g = fc + random.nextInt(bc - fc);
-        int b = fc + random.nextInt(bc - fc);
-        return new Color(r, g, b);
-    }
-
     private static byte[] generateBufferedImage(int w, int h,String code) throws IOException {
         int verifySize = code.length();
         BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
         Random rand = new Random();
         Graphics2D g2 = image.createGraphics();
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        Color[] colors = new Color[5];
-        Color[] colorSpaces = new Color[]{Color.WHITE, Color.CYAN, Color.GRAY, Color.LIGHT_GRAY, Color.MAGENTA,
-                Color.ORANGE, Color.PINK, Color.YELLOW};
-        float[] fractions = new float[colors.length];
-        for (int i = 0; i < colors.length; i++) {
-            colors[i] = colorSpaces[rand.nextInt(colorSpaces.length)];
-            fractions[i] = rand.nextFloat();
-        }
-        Arrays.sort(fractions);
+        //g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // g2.setColor(Color.GRAY);// 设置边框色
-        g2.fillRect(0, 0, w, h);
-
-        Color c = getRandColor(200, 250);
+        Color c = ImageUtil.getRandColor(200, 250);
         g2.setColor(c);// 设置背景色
         g2.fillRect(0, 0, w, h);
 
-        // 绘制干扰线
-        Random random = new Random();
-        g2.setColor(getRandColor(160, 200));// 设置线条的颜色
-        for (int i = 0; i < 10; i++) {
-            int x = random.nextInt(w - 1);
-            int y = random.nextInt(h - 1);
-            int xl = random.nextInt(6) + 1;
-            int yl = random.nextInt(12) + 1;
-            g2.drawLine(x, y, x + xl + 40, y + yl + 20);
-        }
-
-        // 添加噪点
-        float yawpRate = 0.02f;// 噪声率
-        int area = (int) (yawpRate * w * h);
-        for (int i = 0; i < area; i++) {
-            int x = random.nextInt(w);
-            int y = random.nextInt(h);
-            int rgb = getRandomIntColor();
-            image.setRGB(x, y, rgb);
-        }
-
+        ImageUtil.addBgPoint(image);
         // shear(g2, w, h, c);// 使图片扭曲
 
-        g2.setColor(getRandColor(100, 160));
+        g2.setColor(ImageUtil.getRandColor(100, 160));
         int fontSize = h - 4;
         Font font = new Font(DefaultLoadPropFactory.getFontName(), Font.ITALIC, fontSize);
         g2.setFont(font);
@@ -315,23 +263,5 @@ public class PointClickProccess extends BaseProccess implements ICaptchaFactory<
         }
         g2.dispose();
         return ImageUtil.img2Byte(image, IMG_TYPE);// 输出png图片
-    }
-
-    private static int getRandomIntColor() {
-        int[] rgb = getRandomRgb();
-        int color = 0;
-        for (int c : rgb) {
-            color = color << 8;
-            color = color | c;
-        }
-        return color;
-    }
-
-    private static int[] getRandomRgb() {
-        int[] rgb = new int[3];
-        for (int i = 0; i < 3; i++) {
-            rgb[i] = random.nextInt(255);
-        }
-        return rgb;
     }
 }

@@ -4,8 +4,12 @@ import com.alibaba.fastjson.JSON;
 import com.jsonljd.common.captcha.api.entity.CaptchaEntity;
 import com.jsonljd.common.captcha.api.entity.ToBeVerifyEntity;
 import com.jsonljd.common.captcha.entity.ImgInteract;
+import com.jsonljd.common.captcha.handler.bg.IBackgroundHandler;
+import com.jsonljd.common.captcha.handler.bg.impl.DefaultBgHandler;
+import com.jsonljd.common.captcha.utils.ConstUtil;
 import com.jsonljd.common.captcha.utils.ImageUtil;
 import com.jsonljd.common.captcha.utils.SecurityUtil;
+import lombok.Setter;
 import org.springframework.util.Assert;
 
 import java.util.ArrayList;
@@ -20,6 +24,9 @@ import java.util.Map;
  * @Created by JSON.L
  */
 public abstract class ImgHttpBaseHandler extends HttpBaseHandler<ImgInteract> {
+
+    @Setter
+    private IBackgroundHandler backgroundHandler = new DefaultBgHandler(getHandlerName());
 
     @Override
     protected String convertForView(String buildFactoryName, CaptchaEntity<ImgInteract>[] captchaArr, Map<String, Object> buildParams) {
@@ -57,5 +64,27 @@ public abstract class ImgHttpBaseHandler extends HttpBaseHandler<ImgInteract> {
             }
         }
         return null;
+    }
+
+    @Override
+    protected void beforeBuildParams(Map<String, Object> bizParams) {
+        super.beforeBuildParams(bizParams);
+        if(!bizParams.containsKey(ConstUtil.CON_BG_HANDLER)) {
+            bizParams.put(ConstUtil.CON_BG_HANDLER, backgroundHandler);
+        }
+
+        if(!bizParams.containsKey(ConstUtil.KEY_IMG_BG_WIDTH)){
+            bizParams.put(ConstUtil.KEY_IMG_BG_WIDTH, ConstUtil.DEF_LONG_IMG_BG_WIDTH);
+        }
+        if(!bizParams.containsKey(ConstUtil.KEY_IMG_BG_HEIGHT)){
+            bizParams.put(ConstUtil.KEY_IMG_BG_HEIGHT, ConstUtil.DEF_LONG_IMG_BG_HEIGHT);
+        }
+    }
+
+    @Override
+    protected void afterBuildParams(Map<String, Object> bizParams) {
+        if(bizParams.containsKey(ConstUtil.CON_BG_HANDLER)) {
+            bizParams.remove(ConstUtil.CON_BG_HANDLER);
+        }
     }
 }

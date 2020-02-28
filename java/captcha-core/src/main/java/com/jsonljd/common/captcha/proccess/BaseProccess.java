@@ -13,8 +13,6 @@ import java.util.List;
  * @Created by JSON.L
  */
 public class BaseProccess {
-    protected final static int BG_IMG_WIDTH = 300;
-    protected final static int BG_IMG_HEIGHT = 130;
     protected static final Integer CUT_IMG_WIDTH = 2;
     protected final static String IMG_TYPE = "png";
     protected final static int SIM_PER = 100;
@@ -28,9 +26,9 @@ public class BaseProccess {
         return b.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
     }
 
-    protected List<Integer> orderWidth() {
-        int anther_w = BG_IMG_WIDTH % CUT_IMG_WIDTH;
-        int count_w = (BG_IMG_WIDTH - anther_w) / CUT_IMG_WIDTH;
+    protected List<Integer> orderWidth(int gbWidth) {
+        int anther_w = gbWidth % CUT_IMG_WIDTH;
+        int count_w = (gbWidth - anther_w) / CUT_IMG_WIDTH;
         Integer[] retArr = ArrayUtil.arrayRandom(ArrayUtil.arrayInit((count_w)));
         List<Integer> ret = new ArrayList<>();
         for (Integer item : retArr) {

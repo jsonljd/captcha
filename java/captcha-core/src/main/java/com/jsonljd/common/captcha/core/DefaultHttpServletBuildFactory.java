@@ -1,14 +1,11 @@
 package com.jsonljd.common.captcha.core;
 
-import com.alibaba.fastjson.JSON;
 import com.jsonljd.common.captcha.api.biz.IBizMakeImageHandler;
 import com.jsonljd.common.captcha.api.biz.IBizVerifiCodeHandler;
-import com.jsonljd.common.captcha.handler.BaseHandler;
+import com.jsonljd.common.captcha.handler.ImgHttpBaseHandler;
 import com.jsonljd.common.captcha.utils.BeanUtil;
 import com.jsonljd.common.captcha.utils.ConstUtil;
-import com.jsonljd.common.captcha.utils.SecurityUtil;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
 import java.util.HashMap;
@@ -21,15 +18,12 @@ import java.util.Map;
  * @Created by JSON.L
  */
 @Service
-public final class DefaultHttpServletBuildFactory {
-    public static final String PARAMS_HANDLER_TYPE = "HANDLER_TYPE";
-    private Map<String, BaseHandler> captchaHandler = new HashMap<>();
-
+public final class DefaultHttpServletBuildFactory extends BaseImgCaptchaManage {
     @PostConstruct
     public void init() {
         String[] handlerArr = {"com.jsonljd.common.captcha.handler.PuzzleHandler", "com.jsonljd.common.captcha.handler.PointClickHander"};
         for (String item : handlerArr) {
-            BaseHandler baseHandler = BeanUtil.getFactory(BaseHandler.class, item);
+            ImgHttpBaseHandler baseHandler = BeanUtil.getFactory(ImgHttpBaseHandler.class, item);
             captchaHandler.put(baseHandler.getHandlerName(), baseHandler);
         }
     }
@@ -38,7 +32,7 @@ public final class DefaultHttpServletBuildFactory {
         DefaultHttpServletBuildFactory httpServletBuildFactory = new DefaultHttpServletBuildFactory();
         httpServletBuildFactory.init();
         final String[] org = new String[1];
-        httpServletBuildFactory.buildCaptcha(new IBizMakeImageHandler<String>(){
+        httpServletBuildFactory.buildCaptcha(new IBizMakeImageHandler<String>() {
 
             @Override
             public Map<String, Object> getBizParams() {
@@ -77,28 +71,5 @@ public final class DefaultHttpServletBuildFactory {
         });
         System.out.println(isoK);
     }
-
-    public void buildCaptcha(IBizMakeImageHandler bizVerifiHandler) {
-        Assert.notNull(bizVerifiHandler.getBizParams(), "params is err");
-        Assert.notNull(bizVerifiHandler.getBizParams().get(PARAMS_HANDLER_TYPE), "params HANDLER_TYPE is err");
-        String handlerTypeStr = (String) bizVerifiHandler.getBizParams().get(PARAMS_HANDLER_TYPE);
-        Assert.hasText(handlerTypeStr, "handlerType is empty!");
-        captchaHandler.get(handlerTypeStr).makeImage(bizVerifiHandler);
-    }
-
-    public boolean verifiCode(IBizVerifiCodeHandler<String, String> bizVerifiHandler) {
-        Assert.notNull(bizVerifiHandler, "IBizVerifiCodeHandler is err");
-        Assert.notNull(bizVerifiHandler.getOrgData(), "org byte arr is err");
-        Assert.notNull(bizVerifiHandler.getIptData(), "ipt byte arr is err");
-        String[] dataDecode = SecurityUtil.decode(new String(bizVerifiHandler.getOrgData()));
-        Assert.notNull(dataDecode, "dataDecode is err");
-        Map<String, Object> buildParams = JSON.parseObject(dataDecode[1]);
-        String handlerTypeStr = (String) buildParams.get(PARAMS_HANDLER_TYPE);
-        Assert.hasText(handlerTypeStr, "handlerType is empty!");
-        BaseHandler handler = captchaHandler.get(handlerTypeStr);
-        Assert.notNull(handler, "handlerType is err");
-        return handler.verifiCode(bizVerifiHandler);
-    }
-
 }
 
