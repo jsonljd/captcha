@@ -1,5 +1,5 @@
 var captcha = function(){
-    var auhor = 'liangjiandong',version = 'v1.0.1',lastTime = '2020.2.28';
+    var auhor = 'liangjiandong',version = 'v1.0.0',lastTime = '2020.2.28';
 		var unit = (function(){
 			var win = window;
 			var createElement = function(tarname){
